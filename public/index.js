@@ -47,8 +47,9 @@ async function generateTerrain(
             end_row > rows ? rows : end_col
           ));
 	  pct += 100/total;
-	  clear();
-	  log(`${pct}%`);
+	  //clear();
+	  //log(`${pct}%`);
+	  document.querySelector('progress').value = pct;
         }
       }
     return Promise.all(
