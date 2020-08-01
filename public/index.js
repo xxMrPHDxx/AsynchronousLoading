@@ -11,14 +11,8 @@ function findNearest(value, config){
 
 function draw_tiles(tiles, tileSize){
   for(const {x, y, type} of tiles){
-		let col;
-		switch(type){
-			case 'dirt': col = 'brown'; break;
-			case 'water': col = 'blue'; break;
-			default: continue;
-		}
 		noStroke();
-		fill(col);
+		fill(type.color);
 		rect(x, y, tileSize, tileSize);
 	}
 }
@@ -41,9 +35,22 @@ function generateChunk(
       	tiles.push({
 					x, y,
 					type: findNearest(value,[ 
-						{ name: 'water', value: 0.24 },
-						{ name: 'dirt', value: 0.6 }
-					]).name
+						{
+							name: 'water',
+							value: 0.22,
+							color: '#0000dfff'
+						},
+						{ 
+							name: 'dirt',
+							value: 0.56,
+							color: 'brown'
+						},
+						{
+							name: 'sand',
+							value: 0.77,
+							color: '#c2b280ff'
+						}
+					])
       	});
     	}
   	}
@@ -52,7 +59,7 @@ function generateChunk(
 			  draw_tiles(tiles, tSize);
 			  res(tiles);
 			}catch(e){rej(e);}
-		},100);
+		},1);
   }).catch(alert);
 }
 
