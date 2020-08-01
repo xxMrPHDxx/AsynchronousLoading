@@ -3,9 +3,21 @@
   <head>
     <title>Generate Terrain</title>
 		<script type="text/javascript" src="p5.min.js"></script>
+		<script type="text/javascript">
+			function Save(){
+				document.querySelector('canvas').
+					toBlob(blob=>{
+						const a = document.createElement('a');
+						a.href = URL.createObjectURL(blob);
+						a.setAttribute('download', 'terrain.png');
+						a.click();
+					});
+			}
+		</script>
   </head>
   <body>
 		<progress width="200px" max="100"></progress>
     <script type="text/javascript" src="index.js"></script>
+		<button onclick="Save()">Save Terrain</button>
   </body>
 </html>
