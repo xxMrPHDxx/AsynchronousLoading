@@ -1,24 +1,49 @@
-const canvas = document.querySelector('#screen');
-const ctx = canvas.getContext('2d');
+function findNearest(value, config){
+	return config.map(data=>{
+		data.diff = Math.abs(data.value - value);
+		return data;
+	}).reduce((result, current)=>{
+		if(current.diff < result.diff)
+			return current;
+		return result;
+	});
+}
 
 function draw_tiles(tiles, tileSize){
   for(const {x, y, type} of tiles){
-		ctx.fillStyle = type === 'water' ?
-			'blue' : 'brown';
-		ctx.fillRect(x, y, tileSize, tileSize);
+		let col;
+		switch(type){
+			case 'dirt': col = 'brown'; break;
+			case 'water': col = 'blue'; break;
+			default: continue;
+		}
+		noStroke();
+		fill(col);
+		rect(x, y, tileSize, tileSize);
 	}
 }
 
-function generateChunk(r0, c0, r1, c1, tSize){
+function generateChunk(
+	x0, y0, 
+	x1, y1, 
+	tSize,
+	seed
+){
   return new Promise((res, rej)=>{
   	const tiles = [];
-  	for(let row=r0; row<r1; row++){
-    	for(let col=c0; col<c1; col++){
+  	for(let x=x0; x<x1; x+=tSize){
+    	for(let y=y0; y<y1; y+=tSize){
+				const value = noise(
+					x/width, 
+					y/height, 
+					seed
+				);
       	tiles.push({
-					x: col*tSize, y: row*tSize,
-        	row, col,
-					type: Math.random() > 0.5 ? 
-	      		'water' : 'dirt'
+					x, y,
+					type: findNearest(value,[ 
+						{ name: 'water', value: 0.24 },
+						{ name: 'dirt', value: 0.6 }
+					]).name
       	});
     	}
   	}
@@ -32,16 +57,16 @@ function generateChunk(r0, c0, r1, c1, tSize){
 }
 
 async function generateTerrain(
-  rows, cols, 
   tileSize, 
   chunkSize
 ){
   try{
-		canvas.setAttribute('width', cols*tileSize);
-		canvas.setAttribute('height', rows*tileSize);
+		const rows = (height/tileSize)|0;
+		const cols = (width/tileSize)|0;
     const crows = (rows/chunkSize)|0;
     const ccols = (cols/chunkSize)|0;
-      
+    
+		const seed = Math.floor(random(999999));
     const total = crows*ccols;
     let pct = 0;
 
@@ -53,10 +78,11 @@ async function generateTerrain(
         const end_row = from_row + chunkSize;
         const end_col = from_col + chunkSize;
         chunks.push(await generateChunk(
-          from_row, from_col,
+          from_col, from_row,
+          end_col > cols ? cols : end_col,
           end_row > rows ? rows : end_row,
-          end_row > rows ? rows : end_col,
-					tileSize
+					tileSize,
+					seed
         ));
 	  pct += 100/total;
 	  document.querySelector('progress').value = pct;
@@ -68,8 +94,11 @@ async function generateTerrain(
   }catch(e){return Promise.reject(e);}
 }
 
-generateTerrain(100, 100, 4, 10)
-.then(tiles=>{
-  alert('Done', tiles.length);
-})
-.catch(alert);
+function setup(){
+	createCanvas(640, 640);
+	generateTerrain(1, 20)
+	.then(tiles=>{
+  	alert('Done', tiles.length);
+	})
+	.catch(alert);
+}
