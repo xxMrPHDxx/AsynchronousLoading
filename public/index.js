@@ -9,11 +9,12 @@ function findNearest(value, config){
 	});
 }
 
-function draw_tiles(tiles, tileSize){
+function draw_tiles(tiles, tileSize, tilesheet){
   for(const {x, y, type} of tiles){
 		noStroke();
 		fill(type.color);
-		rect(x, y, tileSize, tileSize);
+		canvas.elt.getContext('2d').drawImage(tilesheet[type.name], x, y);
+		// rect(x, y, tileSize, tileSize);
 	}
 }
 
@@ -21,7 +22,8 @@ function generateChunk(
 	x0, y0, 
 	x1, y1, 
 	tSize,
-	seed
+	seed,
+	tilesheet
 ){
   return new Promise((res, rej)=>{
   	const tiles = [];
@@ -58,7 +60,7 @@ function generateChunk(
   	}
   	setTimeout(()=>{
 			try{
-			  draw_tiles(tiles, tSize);
+			  draw_tiles(tiles, tSize, tilesheet);
 			  res(tiles);
 			}catch(e){rej(e);}
 		},1);
@@ -67,10 +69,10 @@ function generateChunk(
 
 async function generateTerrain(
   tileSize, 
-  chunkSize
+  chunkSize,
+  tilesheet
 ){
   try{
-		alert(width + ',' + height);
 		const rows = (height/tileSize)|0;
 		const cols = (width/tileSize)|0;
     const crows = (rows/chunkSize)|0;
@@ -92,7 +94,8 @@ async function generateTerrain(
           end_col > cols ? cols : end_col,
           end_row > rows ? rows : end_row,
 					tileSize,
-					seed
+					seed,
+					tilesheet
         ));
 	  		pct += 100/total;
 	  		document.querySelector('progress').value = pct;
@@ -104,11 +107,44 @@ async function generateTerrain(
   }catch(e){return Promise.reject(e);}
 }
 
+function loadTiles(tileSize=16){
+	const imgs = {
+		'dirt': 'img/dirt.jpg',
+		'sand': 'img/sand.jpg',
+		'water': 'img/water.jpg'
+	}
+	return Promise.all(
+		Object
+		.entries(imgs)
+		.map(([name, path])=>{
+		return new Promise((res, rej)=>{
+			const canvas = document.createElement('canvas');
+			const img = new Image();
+			img.onload = ()=>{
+				canvas.width = canvas.height = tileSize;
+				const ctx = canvas.getContext('2d');
+				ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, tileSize, tileSize);
+				res({name, img: canvas});
+			};
+			img.onerror = rej;
+			img.src = path;
+		});
+	}))
+	.then(imgs=>{
+		return imgs.reduce((obj, {name, img})=>{
+			obj[name] = img; return obj;
+		}, {});
+	});	
+}
+
+let canvas;
+
 function setup(){
-	createCanvas(1024, 1024);
-	generateTerrain(4, 16)
+	canvas = createCanvas(2048, 2048);
+	loadTiles()
+	.then(tilesheet=>generateTerrain(16, 16, tilesheet))
 	.then(tiles=>{
-  	alert('Done', tiles.length);
+  	alert('Done');
 	})
 	.catch(alert);
 }
