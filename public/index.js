@@ -25,8 +25,10 @@ function generateChunk(
 ){
   return new Promise((res, rej)=>{
   	const tiles = [];
-  	for(let x=x0; x<x1; x+=tSize){
-    	for(let y=y0; y<y1; y+=tSize){
+  	for(let xc=x0; xc<x1; xc++){
+    	for(let yc=y0; yc<y1; yc++){
+				const x = xc*tSize;
+				const y = yc*tSize;
 				const value = noise(
 					x/width, 
 					y/height, 
@@ -38,12 +40,12 @@ function generateChunk(
 						{
 							name: 'water',
 							value: 0.22,
-							color: '#0000dfff'
+							color: '#0000afff'
 						},
 						{ 
 							name: 'dirt',
 							value: 0.56,
-							color: 'brown'
+							color: '#76552bff'
 						},
 						{
 							name: 'sand',
@@ -68,6 +70,7 @@ async function generateTerrain(
   chunkSize
 ){
   try{
+		alert(width + ',' + height);
 		const rows = (height/tileSize)|0;
 		const cols = (width/tileSize)|0;
     const crows = (rows/chunkSize)|0;
@@ -91,10 +94,10 @@ async function generateTerrain(
 					tileSize,
 					seed
         ));
-	  pct += 100/total;
-	  document.querySelector('progress').value = pct;
-        }
+	  		pct += 100/total;
+	  		document.querySelector('progress').value = pct;
       }
+    }
     return Promise.all(
       [].concat.apply([], chunks)
     );
@@ -102,8 +105,8 @@ async function generateTerrain(
 }
 
 function setup(){
-	createCanvas(640, 640);
-	generateTerrain(1, 20)
+	createCanvas(1024, 1024);
+	generateTerrain(4, 16)
 	.then(tiles=>{
   	alert('Done', tiles.length);
 	})
