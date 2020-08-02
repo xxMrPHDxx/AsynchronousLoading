@@ -4,7 +4,7 @@
     <title>Generate Terrain</title>
 		<script type="text/javascript" src="p5.min.js"></script>
 		<script type="text/javascript">
-			function Save(){
+			function SaveTerrain(){
 				document.querySelector('canvas').
 					toBlob(blob=>{
 						const a = document.createElement('a');
@@ -13,11 +13,15 @@
 						a.click();
 					});
 			}
+			function DownloadMap(){
+				if(grid) downloadTerrain(grid);
+			}
 		</script>
   </head>
   <body>
 		<progress width="200px" max="100"></progress>
     <script type="text/javascript" src="index.js"></script>
-		<button onclick="Save()">Save Terrain</button>
+		<button onclick="SaveTerrain()">Save Terrain</button>
+		<button onclick="DownloadMap()">Download Map</button>
   </body>
 </html>

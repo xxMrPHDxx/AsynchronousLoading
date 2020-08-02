@@ -10,27 +10,28 @@ function findNearest(value, config){
 }
 
 function draw_tiles(tiles, tileSize, tilesheet){
-  for(const {x, y, type} of tiles){
-		noStroke();
-		fill(type.color);
-		canvas.elt.getContext('2d').drawImage(tilesheet[type.name], x, y);
+  for(const {x, y, tile} of tiles){
+  	setTimeout(()=>{
+			noStroke();
+			canvas.elt.getContext('2d').drawImage(tilesheet[tile], x, y);
+		}, 5);
 		// rect(x, y, tileSize, tileSize);
 	}
 }
 
 function generateChunk(
-	x0, y0, 
-	x1, y1, 
+	r0, c0, 
+	r1, c1, 
 	tSize,
 	seed,
 	tilesheet
 ){
   return new Promise((res, rej)=>{
   	const tiles = [];
-  	for(let xc=x0; xc<x1; xc++){
-    	for(let yc=y0; yc<y1; yc++){
-				const x = xc*tSize;
-				const y = yc*tSize;
+  	for(let row=r0; row<r1; row++){
+    	for(let col=c0; col<c1; col++){
+				const x = col*tSize;
+				const y = row*tSize;
 				const value = noise(
 					x/width, 
 					y/height, 
@@ -38,7 +39,8 @@ function generateChunk(
 				);
       	tiles.push({
 					x, y,
-					type: findNearest(value,[ 
+					row, col,
+					tile: findNearest(value,[ 
 						{
 							name: 'water',
 							value: 0.22,
@@ -54,7 +56,7 @@ function generateChunk(
 							value: 0.77,
 							color: '#c2b280ff'
 						}
-					])
+					]).name
       	});
     	}
   	}
@@ -68,11 +70,11 @@ function generateChunk(
 }
 
 async function generateTerrain(
-  tileSize, 
   chunkSize,
   tilesheet
 ){
   try{
+  	const tileSize = tilesheet.tileSize;
 		const rows = (height/tileSize)|0;
 		const cols = (width/tileSize)|0;
     const crows = (rows/chunkSize)|0;
@@ -90,12 +92,12 @@ async function generateTerrain(
         const end_row = from_row + chunkSize;
         const end_col = from_col + chunkSize;
         chunks.push(await generateChunk(
-          from_col, from_row,
-          end_col > cols ? cols : end_col,
+          from_row, from_col,
           end_row > rows ? rows : end_row,
+          end_col > cols ? cols : end_col,
 					tileSize,
 					seed,
-					tilesheet
+					tilesheet.tiles
         ));
 	  		pct += 100/total;
 	  		document.querySelector('progress').value = pct;
@@ -131,19 +133,42 @@ function loadTiles(tileSize=16){
 		});
 	}))
 	.then(imgs=>{
-		return imgs.reduce((obj, {name, img})=>{
-			obj[name] = img; return obj;
-		}, {});
+		return {
+			tileSize,
+			tiles: imgs.reduce((obj, {name, img})=>{
+				obj[name] = img; return obj;
+			}, {})
+		};
 	});	
 }
 
+function toGrid(tiles){
+	const grid = tiles.reduce((grid, {row, col, tile})=>{
+		if(!grid[row]) grid[row] = [];
+		grid[row][col] = tile;
+		return grid;
+	},[]);
+	delete tiles;
+	return grid;
+}
+
+function downloadTerrain(grid){
+	const blob = new Blob(JSON.stringify(grid).split());
+	const a = document.createElement('a');
+	a.href = URL.createObjectURL(blob);
+	a.setAttribute('download', 'terrain.json');
+	a.click();
+}
+
 let canvas;
+let grid;
 
 function setup(){
 	canvas = createCanvas(2048, 2048);
-	loadTiles()
-	.then(tilesheet=>generateTerrain(16, 16, tilesheet))
+	loadTiles(8)
+	.then(tiles=>generateTerrain(32, tiles))
 	.then(tiles=>{
+		grid = toGrid(tiles);
   	alert('Done');
 	})
 	.catch(alert);
