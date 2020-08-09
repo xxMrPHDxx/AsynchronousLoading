@@ -14,8 +14,7 @@ function draw_tiles(tiles, tileSize, tilesheet){
   	setTimeout(()=>{
 			noStroke();
 			canvas.elt.getContext('2d').drawImage(tilesheet[tile], x, y);
-		}, 5);
-		// rect(x, y, tileSize, tileSize);
+		}, 0);
 	}
 }
 
@@ -165,7 +164,7 @@ let grid;
 
 function setup(){
 	canvas = createCanvas(2048, 2048);
-	loadTiles(8)
+	loadTiles(32)
 	.then(tiles=>generateTerrain(32, tiles))
 	.then(tiles=>{
 		grid = toGrid(tiles);
